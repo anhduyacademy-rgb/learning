@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starters English Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF9F1C;
+            --success: #2EC4B6;
+            --danger: #E71D36;
+            --light: #FDFFFC;
+            --dark: #011627;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #f0f8ff;
+            background-image: radial-gradient(#dbe9f6 15%, transparent 16%), radial-gradient(#dbe9f6 15%, transparent 16%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .card {
+            background: var(--light);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            text-align: center;
+            position: relative;
+            border: 5px solid #fff;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            color: var(--primary);
+            margin-top: 0;
+        }
+
+        .image-container {
+            width: 100%;
+            height: 250px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px dashed #cbd5e0;
+            margin-bottom: 20px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .sentence-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .sentence {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        .audio-btn {
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 0 #e08e1a;
+            transition: transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .audio-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .choices {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .choice-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            border: none;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+        }
+
+        .btn-tick {
+            background-color: var(--success);
+            color: white;
+            box-shadow: 0 6px 0 #249d92;
+        }
+
+        .btn-cross {
+            background-color: var(--danger);
+            color: white;
+            box-shadow: 0 6px 0 #b9172b;
+        }
+
+        .choice-btn:active {
+            transform: translateY(6px);
+            box-shadow: none;
+        }
+
+        .choice-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Feedback Animation */
+        .feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-family: 'Fredoka One', cursive;
+            font-size: 4rem;
+            text-shadow: 2px 2px 0px #fff;
+            pointer-events: none;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10;
+        }
+
+        .feedback.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .correct-text { color: var(--success); }
+        .wrong-text { color: var(--danger); }
+
+        .progress {
+            margin-top: 20px;
+            color: #888;
+            font-weight: bold;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: fall linear forwards;
+        }
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); }
+        }
+
+        #end-screen {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="quiz-screen">
+        <h1>Look and Read</h1>
+        
+        <div class="image-container">
+            <img id="q-image" src="" alt="Vocabulary Image">
+        </div>
+
+        <div class="sentence-box">
+            <button class="audio-btn" onclick="playAudio()">🔊</button>
+            <span class="sentence" id="q-text">Loading...</span>
+        </div>
+
+        <div class="choices">
+            <button class="choice-btn btn-cross" onclick="checkAnswer(false)">✘</button>
+            <button class="choice-btn btn-tick" onclick="checkAnswer(true)">✔</button>
+        </div>
+
+        <div class="progress" id="progress-text">Question 1 of 5</div>
+        
+        <div id="feedback-correct" class="feedback correct-text">YES!</div>
+        <div id="feedback-wrong" class="feedback wrong-text">NO!</div>
+    </div>
+
+    <div class="card" id="end-screen">
+        <h1>Good Job! 🎉</h1>
+        <p style="font-size: 1.2rem;">You finished the test!</p>
+        <p style="font-size: 3rem; margin: 20px 0;" id="final-score">0/0</p>
+        <button class="choice-btn btn-tick" style="width: auto; padding: 0 30px; font-size: 1.5rem;" onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script>
+        // DỮ LIỆU CÂU HỎI (Bạn có thể thêm nhiều câu hỏi vào đây)
+        // isCorrect: true (nếu hình và chữ khớp nhau), false (nếu sai)
+        const questions = [
+            {
+                // Thay bằng đường dẫn ảnh thật của bạn (ví dụ: 'img/hippo.jpg')
+                image: "hippo.png", 
+                text: "This is a hippo.",
+                isCorrect: true
+            },
+            {
+                image: "sofa.png",
+                text: "This is a chair.",
+                isCorrect: false // Hình là sofa nhưng chữ là chair -> Sai
+            },
+            {
+                image: "bookcase.png",
+                text: "This is a bookcase.",
+                isCorrect: true 
+            },
+            {
+                image: "bird.png",
+                text: "This is a chicken.",
+                isCorrect: false // Hình là bird, chữ là chicken -> Sai
+            },
+            {
+                image: "plane.png",
+                text: "This is a plane.",
+                isCorrect: true
+            }
+        ];
+
+        let currentQ = 0;
+        let score = 0;
+        let canClick = true;
+
+        const imgEl = document.getElementById('q-image');
+        const textEl = document.getElementById('q-text');
+        const progressEl = document.getElementById('progress-text');
+        const feedbackYes = document.getElementById('feedback-correct');
+        const feedbackNo = document.getElementById('feedback-wrong');
+
+        // Hàm khởi chạy ban đầu
+        function loadQuestion() {
+            if (currentQ >= questions.length) {
+                showEndScreen();
+                return;
+            }
+
+            const q = questions[currentQ];
+            imgEl.src = q.image;
+            textEl.innerText = q.text;
+            progressEl.innerText = `Question ${currentQ + 1} of ${questions.length}`;
+            
+            // Tự động đọc khi chuyển câu mới (tuỳ chọn, nếu muốn bé tự bấm thì bỏ dòng này)
+            // setTimeout(playAudio, 500); 
+            
+            canClick = true;
+        }
+
+        // Hàm phát âm thanh (Sử dụng Web Speech API có sẵn của trình duyệt)
+        function playAudio() {
+            const text = questions[currentQ].text;
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Cấu hình giọng đọc
+            utterance.lang = 'en-GB'; // Giọng Anh-Anh (chuẩn Cambridge)
+            utterance.rate = 0.8;     // Tốc độ chậm cho bé dễ nghe
+            utterance.pitch = 1.1;    // Giọng cao hơn một chút cho vui tai
+            
+            window.speechSynthesis.cancel(); // Dừng câu đang đọc dở (nếu có)
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Kiểm tra đáp án
+        function checkAnswer(userChoice) {
+            if (!canClick) return;
+            canClick = false; // Chặn click liên tục
+
+            const isCorrect = (userChoice === questions[currentQ].isCorrect);
+
+            if (isCorrect) {
+                score++;
+                showFeedback(feedbackYes);
+                playSoundEffect(true);
+            } else {
+                showFeedback(feedbackNo);
+                playSoundEffect(false);
+            }
+
+            // Chuyển câu sau 1.5 giây
+            setTimeout(() => {
+                currentQ++;
+                loadQuestion();
+            }, 1500);
+        }
+
+        function showFeedback(element) {
+            element.classList.add('show');
+            setTimeout(() => {
+                element.classList.remove('show');
+            }, 1000);
+        }
+
+        function playSoundEffect(correct) {
+            // Tạo âm thanh bíp đơn giản bằng code (không cần file mp3)
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = context.createOscillator();
+            const gain = context.createGain();
+            osc.connect(gain);
+            gain.connect(context.destination);
+
+            if (correct) {
+                // Âm thanh "Ting" (tần số cao)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, context.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1000, context.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, context.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.3);
+                osc.start();
+                osc.stop(context.currentTime + 0.3);
+                createConfetti(); // Bắn pháo giấy
+            } else {
+                // Âm thanh "Bụp" (tần số thấp)
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, context.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, context.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, context.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.2);
+                osc.start();
+                osc.stop(context.currentTime + 0.2);
+            }
+        }
+
+        function showEndScreen() {
+            document.getElementById('quiz-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+            document.getElementById('final-score').innerText = `${score}/${questions.length}`;
+            if(score === questions.length) createConfetti();
+        }
+
+        // Hiệu ứng pháo giấy đơn giản
+        function createConfetti() {
+            const colors = ['#FF9F1C', '#2EC4B6', '#E71D36', '#FDFFFC'];
+            for (let i = 0; i < 30; i++) {
+                const conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), 3000);
+            }
+        }
+
+        // Bắt đầu
+        loadQuestion();
+    </script>
+</body>
+</html>
