@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cambridge Starters: Look and Read (15 Questions)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF9F1C;
+            --secondary: #2EC4B6;
+            --wrong: #E71D36;
+            --bg: #CBF3F0;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            user-select: none; /* Ngăn bôi đen văn bản */
+        }
+
+        .card {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+        }
+
+        /* Thanh tiến độ */
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: var(--secondary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            color: var(--primary);
+            margin: 0 0 15px 0;
+        }
+
+        .img-box {
+            width: 100%;
+            height: 260px;
+            border: 2px dashed #ccc;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .img-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .question-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 50px;
+            margin-bottom: 25px;
+        }
+
+        .sentence {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .btn-audio {
+            background: var(--primary);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 0 #cc7a00;
+        }
+        .btn-audio:active { transform: translateY(3px); box-shadow: none; }
+
+        .choices {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .btn-choice {
+            width: 80px;
+            height: 80px;
+            border-radius: 15px;
+            border: none;
+            font-size: 2.5rem;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.1s;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.2);
+        }
+
+        .btn-tick { background: var(--secondary); box-shadow: 0 5px 0 #208b81; }
+        .btn-cross { background: var(--wrong); box-shadow: 0 5px 0 #a31628; }
+        
+        .btn-choice:active { transform: translateY(5px); box-shadow: none; }
+
+        /* Hiệu ứng kết quả */
+        .feedback {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-family: 'Fredoka One', cursive;
+            font-size: 4rem;
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            z-index: 10;
+        }
+        .feedback.show { transform: translate(-50%, -50%) scale(1); }
+        .correct-text { color: #2EC4B6; -webkit-text-stroke: 2px white; }
+        .wrong-text { color: #E71D36; -webkit-text-stroke: 2px white; }
+
+        #end-screen { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="quiz-screen">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+
+        <h1>Look and Read</h1>
+
+        <div class="img-box">
+            <img id="q-image" src="" alt="Vocabulary">
+        </div>
+
+        <div class="question-box">
+            <button class="btn-audio" onclick="speak()">🔊</button>
+            <span class="sentence" id="q-text">Loading...</span>
+        </div>
+
+        <div class="choices">
+            <button class="btn-choice btn-cross" onclick="check(false)">✘</button>
+            <button class="btn-choice btn-tick" onclick="check(true)">✔</button>
+        </div>
+
+        <div id="feedback-txt" class="feedback">YES!</div>
+    </div>
+
+    <div class="card" id="end-screen">
+        <h1>Good Job! 🎉</h1>
+        <p>You have finished the test.</p>
+        <h2 id="final-score" style="font-size: 3rem; color: var(--primary);"></h2>
+        <button class="btn-choice btn-tick" style="width: auto; padding: 0 30px; font-size: 1.5rem;" onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script>
+        // DỮ LIỆU 15 CÂU HỎI
+        const questions = [
+            // --- 5 CÂU CŨ (Dùng link Google Drive của bạn) ---
+            {
+                image: "hippo.png",
+                text: "This is a hippo.",
+                answer: true
+            },
+            {
+                image: "bookcase.png",
+                text: "This is a bookcase.",
+                answer: true
+            },
+            {
+                image: "sofa.png",
+                text: "This is a chair.",
+                answer: false // Hình là Sofa
+            },
+            {
+                image: "plane.png",
+                text: "This is a plane.",
+                answer: true
+            },
+            {
+                image: "bird.png",
+                text: "This is a chicken.",
+                answer: false // Hình là gà quay (Roasted chicken)
+            },
+
+            // --- 10 CÂU MỚI (Dùng link ảnh minh họa online) ---
+            {
+                // 6. Wall (Yes)
+                image: "wall.png",
+                text: "This is a wall.",
+                answer: true
+            },
+            {
+                // 7. Chicken (Yes) - Hình con gà sống
+                image: "chicken.png",
+                text: "This is a chicken.",
+                answer: true
+            },
+            {
+                // 8. Dress (Yes)
+                image: "dress.png",
+                text: "This is a dress.",
+                answer: true
+            },
+            {
+                // 9. T-shirt (Yes) - Hình là áo sơ mi (Shirt)
+                image: "shirt.png",
+                text: "This is a T-shirt.",
+                answer: true 
+            },
+            {
+                // 10. Goat (No) - Hình là cái thuyền (Boat) - Bẫy âm
+                image: "boat.png",
+                text: "This is a goat.",
+                answer: false
+            },
+            {
+                // 11. Pear (Yes)
+                image: "pear.png",
+                text: "This is a pear.",
+                answer: true
+            },
+            {
+                // 12. Television (No) - Hình là điện thoại (Telephone)
+                image: "telephone.png",
+                text: "This is a television.",
+                answer: false
+            },
+            {
+                // 13. Page (Yes) - Hình quyển sách mở
+                image: "page.png",
+                text: "This is a page.",
+                answer: true
+            },
+            {
+                // 14. Photo (No) - Hình là máy ảnh (Camera)
+                image: "camera.png",
+                text: "This is a photo.",
+                answer: false
+            },
+            {
+                // 15. Shirt (Yes)
+                image: "shirt-2.png",
+                text: "This is a shirt.",
+                answer: true
+            }
+        ];
+
+        let idx = 0;
+        let score = 0;
+        let allowClick = true;
+
+        const imgEl = document.getElementById('q-image');
+        const txtEl = document.getElementById('q-text');
+        const progressEl = document.getElementById('progress');
+        const feedbackEl = document.getElementById('feedback-txt');
+
+        function loadQuestion() {
+            if (idx >= questions.length) {
+                document.getElementById('quiz-screen').style.display = 'none';
+                document.getElementById('end-screen').style.display = 'block';
+                document.getElementById('final-score').innerText = `${score} / ${questions.length}`;
+                return;
+            }
+
+            const q = questions[idx];
+            imgEl.src = q.image;
+            txtEl.innerText = q.text;
+            
+            // Cập nhật thanh tiến độ
+            progressEl.style.width = `${(idx / questions.length) * 100}%`;
+            
+            allowClick = true;
+
+            // Tự động đọc sau 0.5s (nếu muốn)
+            // setTimeout(speak, 500);
+        }
+
+        function speak() {
+            if (idx >= questions.length) return;
+            const text = questions[idx].text;
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'en-GB'; // Giọng Anh
+            u.rate = 0.8;     // Đọc chậm
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(u);
+        }
+
+        function check(choice) {
+            if (!allowClick) return;
+            allowClick = false;
+
+            const isCorrect = (choice === questions[idx].answer);
+            
+            // Hiển thị feedback
+            feedbackEl.innerText = isCorrect ? "YES!" : "NO!";
+            feedbackEl.className = "feedback show " + (isCorrect ? "correct-text" : "wrong-text");
+            
+            playSound(isCorrect);
+
+            if (isCorrect) score++;
+
+            // Chuyển câu sau 1.2 giây
+            setTimeout(() => {
+                feedbackEl.classList.remove('show');
+                idx++;
+                loadQuestion();
+            }, 1200);
+        }
+
+        // Tạo âm thanh bằng code (không cần file mp3)
+        function playSound(correct) {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            if (correct) {
+                // Tiếng Ting
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            } else {
+                // Tiếng Bụp
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.2);
+            }
+        }
+
+        loadQuestion();
+    </script>
+</body>
+</html>
